@@ -17,17 +17,17 @@ const loginPage = (req, res) => {
 };
 
 const login = async (req, res, next) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
-    const [rows] = await db.query("SELECT * FROM users WHERE username = ?", [
-      username,
+    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [
+      email,
     ]);
 
     if (rows.length === 0) {
       return res.render("login", {
         title: "Login",
-        error: "Invalid username or password",
+        error: "Invalid email or password",
       });
     }
 
@@ -37,16 +37,17 @@ const login = async (req, res, next) => {
     if (!isMatch) {
       return res.render("login", {
         title: "Login",
-        error: "Invalid username or password",
+        error: "Invalid email or password",
       });
     }
 
     // Set session
     req.session.userId = user.id;
-    req.session.username = user.username;
+    req.session.username = user.name || user.email;
 
     res.redirect("/home");
   } catch (err) {
+    console.error("Login Error:", err);
     next(err);
   }
 };

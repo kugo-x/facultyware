@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <%- include('../partials/_head', { title: title }) %>
+</head>
+<body>
+
+<%- include('../partials/_sidebar', { user: user }) %>
+
+<main id="content">
+  <header class="bg-background sticky inset-x-0 top-0 isolate flex shrink-0 items-center gap-2 border-b z-10">
+    <div class="flex h-14 w-full items-center gap-2 px-4">
+      <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+        aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+      <nav aria-label="breadcrumb" class="flex items-center gap-1.5 text-sm">
+        <a href="/home" class="text-muted-foreground hover:text-foreground transition-colors">Beranda</a>
+        <span class="text-muted-foreground">/</span>
+        <span class="text-foreground font-medium">Daftar Ruangan</span>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+          aria-label="Toggle dark mode" class="btn-icon-outline size-8">
+          <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+        <a href="/logout" class="btn-outline btn-sm gap-1.5 hidden sm:flex">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
+
+    <%# PAGE TITLE + ACTIONS %>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Daftar Ruangan</h1>
+        <p class="text-muted-foreground text-sm mt-1">Kelola semua ruangan dan aset di dalamnya.</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="/ruangan/export/pdf<%= (q || buildingId) ? '?q='+encodeURIComponent(q)+'&building_id='+buildingId : '' %>" class="btn-secondary btn-sm gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Export PDF
+        </a>
+        <a href="/ruangan/export/docx<%= (q || buildingId) ? '?q='+encodeURIComponent(q)+'&building_id='+buildingId : '' %>" class="btn-secondary btn-sm gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Export DOCX
+        </a>
+        <a href="/ruangan/create" id="btn-tambah-ruangan" class="btn btn-sm gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Ruangan
+        </a>
+      </div>
+    </div>
+
+    <%# FLASH MESSAGE %>
+    <% if (flash) { %>
+    <div class="alert <%= flash.type === 'success' ? 'alert-success' : 'alert-destructive' %>" role="alert" id="flash-msg">
+      <% if (flash.type === 'success') { %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <% } else { %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <% } %>
+      <div>
+        <p class="font-medium"><%= flash.type === 'success' ? 'Berhasil!' : 'Gagal!' %></p>
+        <p class="text-sm"><%= flash.message %></p>
+      </div>
+    </div>
+    <% } %>
+
+    <%# STATS CARDS %>
+    <div class="flex flex-wrap gap-3">
+      <div class="card p-3 flex items-center gap-3 flex-1 min-w-[160px]">
+        <div class="bg-primary/10 text-primary rounded-lg p-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+        </div>
+        <div>
+          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Total Ruangan</p>
+          <p class="text-xl font-bold leading-none"><%= stats.total_ruangan %></p>
+        </div>
+      </div>
+      <% stats.ruangan_per_gedung.forEach(g => { %>
+      <div class="card p-3 flex items-center gap-3 flex-1 min-w-[160px]">
+        <div class="bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg p-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/></svg>
+        </div>
+        <div>
+          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider truncate max-w-[120px]"><%= g.name %></p>
+          <p class="text-xl font-bold leading-none"><%= g.jumlah_ruangan %> <span class="text-sm font-normal text-muted-foreground">ruangan</span></p>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+
+    <%# TABLE CARD %>
+    <div class="card">
+      <div class="card-header flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 class="card-title">Semua Ruangan</h2>
+          <p class="card-description">
+            <% if (q || buildingId) { %>
+              Hasil filter: <strong><%= ruangans.length %></strong> data ditemukan.
+            <% } else { %>
+              Total <strong><%= ruangans.length %></strong> ruangan terdaftar.
+            <% } %>
+          </p>
+        </div>
+        <form method="GET" action="/ruangan" class="flex flex-wrap items-center gap-2">
+          <select id="filter-gedung" name="building_id" class="select select-sm w-full sm:w-44">
+            <option value="0">Semua Gedung</option>
+            <% buildings.forEach(b => { %>
+            <option value="<%= b.id %>" <%= buildingId === b.id ? 'selected' : '' %>><%= b.name %></option>
+            <% }) %>
+          </select>
+          <input type="text" id="search-ruangan" name="q" value="<%= q %>" placeholder="Cari nama atau kode..." class="input input-sm w-full sm:w-52" />
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button type="submit" class="btn btn-sm flex-1 sm:flex-none">Filter</button>
+            <% if (q || buildingId) { %>
+            <a href="/ruangan" class="btn-outline btn-sm flex-1 sm:flex-none text-center">Reset</a>
+            <% } %>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-content p-0">
+        <div class="overflow-x-auto">
+          <table class="table w-full">
+            <thead>
+              <tr>
+                <th class="w-10">#</th>
+                <th>Foto</th>
+                <th>Nama Ruangan</th>
+                <th>Kode</th>
+                <th>Gedung</th>
+                <th>Lantai</th>
+                <th class="text-center">Kapasitas</th>
+                <th class="text-center">Jumlah Aset</th>
+                <th class="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% ruangans.forEach((r, i) => { %>
+              <tr>
+                <td class="text-muted-foreground text-sm"><%= i + 1 %></td>
+                <td>
+                  <% if (r.photo) { %>
+                    <img src="/uploads/ruangan/<%= r.photo %>" alt="foto" style="max-height:40px; border-radius:4px;">
+                  <% } else { %>
+                    <span class="text-muted-foreground">—</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="font-medium"><%= r.room_name %></div>
+                  <div class="text-xs text-muted-foreground"><%= r.building_name %></div>
+                </td>
+                <td><span class="badge badge-outline font-mono text-xs"><%= r.room_code %></span></td>
+                <td class="text-sm"><%= r.building_name %></td>
+                <td class="text-sm text-muted-foreground"><%= r.floor || '—' %></td>
+                <td class="text-center text-sm"><%= r.capacity %></td>
+                <td class="text-center">
+                  <span class="badge <%= r.jumlah_aset > 0 ? 'badge-secondary' : 'badge-outline' %>">
+                    <%= r.jumlah_aset %> aset
+                  </span>
+                </td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <a href="/ruangan/<%= r.id %>/aset" id="btn-kelola-aset-<%= r.id %>" class="btn-sm gap-1 btn-outline btn-sm text-xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      Kelola Aset
+                    </a>
+                    <a href="/ruangan/<%= r.id %>/edit" id="btn-edit-ruangan-<%= r.id %>" class="btn-sm-outline btn-sm gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Edit
+                    </a>
+                    <button type="button"
+                      id="btn-hapus-ruangan-<%= r.id %>"
+                      onclick="confirmDelete('/ruangan/<%= r.id %>/delete', '<%= r.room_name %>', <%= r.jumlah_aset %>)"
+                      class="btn-sm-destructive btn-sm gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      Hapus
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+              <% if (ruangans.length === 0) { %>
+              <tr>
+                <td colspan="9" class="text-center py-12">
+                  <div class="flex flex-col items-center gap-2 text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="opacity-30"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+                    <p class="text-sm font-medium">Belum ada data ruangan.</p>
+                    <a href="/ruangan/create" class="btn-sm mt-1">Tambah Ruangan Pertama</a>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<form id="delete-form" method="POST" action="" style="display:none;"></form>
+
+<div id="dialog-hapus" class="dialog" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="dialog-hapus-title">
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <h2 id="dialog-hapus-title" class="dialog-title">Hapus Ruangan</h2>
+      <p class="dialog-description" id="dialog-hapus-desc">Tindakan ini tidak dapat dibatalkan.</p>
+    </div>
+    <p class="text-sm text-muted-foreground">Yakin ingin menghapus ruangan <strong id="dialog-hapus-name" class="text-foreground"></strong>?</p>
+    <p class="text-sm text-destructive mt-1 hidden" id="dialog-hapus-warning">
+      ⚠️ Ruangan ini masih memiliki <strong id="dialog-aset-count"></strong> aset. Semua aset akan ikut terhapus!
+    </p>
+    <div class="dialog-footer">
+      <button type="button" onclick="closeDialog()" class="btn-outline">Batal</button>
+      <button type="button" onclick="submitDelete()" id="btn-confirm-hapus" class="btn-destructive">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(action, name, jumlahAset) {
+    document.getElementById('delete-form').action = action;
+    document.getElementById('dialog-hapus-name').textContent = name;
+    const warning = document.getElementById('dialog-hapus-warning');
+    if (jumlahAset > 0) {
+      document.getElementById('dialog-aset-count').textContent = jumlahAset;
+      warning.classList.remove('hidden');
+    } else {
+      warning.classList.add('hidden');
+    }
+    const d = document.getElementById('dialog-hapus');
+    d.setAttribute('aria-hidden', 'false');
+    d.classList.add('dialog-open');
+  }
+  function closeDialog() {
+    const d = document.getElementById('dialog-hapus');
+    d.setAttribute('aria-hidden', 'true');
+    d.classList.remove('dialog-open');
+  }
+  function submitDelete() { document.getElementById('delete-form').submit(); }
+  const flash = document.getElementById('flash-msg');
+  if (flash) setTimeout(() => flash.style.opacity = '0', 4000);
+</script>
+
+</body>
+</html>

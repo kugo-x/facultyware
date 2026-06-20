@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <%- include('../../partials/_head', { title: title }) %>
+</head>
+<body>
+
+<%- include('../../partials/_sidebar', { user: user }) %>
+
+<main id="content">
+  <header class="bg-background sticky inset-x-0 top-0 isolate flex shrink-0 items-center gap-2 border-b z-10">
+    <div class="flex h-14 w-full items-center gap-2 px-4">
+      <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+        aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+      <nav aria-label="breadcrumb" class="flex items-center gap-1.5 text-sm">
+        <a href="/ruangan" class="text-muted-foreground hover:text-foreground transition-colors">Ruangan</a>
+        <span class="text-muted-foreground">/</span>
+        <a href="/ruangan/<%= ruangan.id %>/aset" class="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"><%= ruangan.room_name %></a>
+        <span class="text-muted-foreground">/</span>
+        <span class="text-foreground font-medium">Edit Aset</span>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+          aria-label="Toggle dark mode" class="btn-icon-outline size-8">
+          <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
+
+    <%# INFO RUANGAN %>
+    <div class="card p-3 flex items-center gap-3 bg-muted/50">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted-foreground flex-shrink-0"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+      <div class="text-sm">
+        <span class="font-medium"><%= ruangan.room_name %></span>
+        <span class="text-muted-foreground ml-2"><%= ruangan.room_code %> · <%= ruangan.building_name %></span>
+      </div>
+    </div>
+
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Edit Aset</h1>
+      <p class="text-muted-foreground text-sm mt-1">Perbarui informasi aset <strong><%= aset.asset_name %></strong>.</p>
+    </div>
+
+    <% if (errors && errors.length > 0) { %>
+    <div class="alert alert-destructive">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <p class="font-medium">Terdapat kesalahan:</p>
+        <ul class="text-sm list-disc list-inside mt-1"><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="card">
+      <div class="card-content pt-6">
+        <form id="form-edit-aset" action="/ruangan/<%= ruangan.id %>/aset/<%= aset.id %>/update" method="POST" class="space-y-5">
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="asset_name">Nama Aset <span class="text-destructive">*</span></label>
+              <input type="text" id="asset_name" name="asset_name"
+                value="<%= aset.asset_name || '' %>"
+                class="input w-full" required />
+            </div>
+            <div class="field">
+              <label class="label" for="asset_code">Kode Aset <span class="text-destructive">*</span></label>
+              <input type="text" id="asset_code" name="asset_code"
+                value="<%= aset.asset_code || '' %>"
+                class="input w-full" required />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="condition">Kondisi <span class="text-destructive">*</span></label>
+              <select id="condition" name="condition" class="select w-full" required>
+                <option value="good"         <%= aset.asset_condition === 'good'         ? 'selected' : '' %>>Baik</option>
+                <option value="minor_damage" <%= aset.asset_condition === 'minor_damage' ? 'selected' : '' %>>Rusak Ringan</option>
+                <option value="major_damage" <%= aset.asset_condition === 'major_damage' ? 'selected' : '' %>>Rusak Berat</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="status">Status <span class="text-destructive">*</span></label>
+              <select id="status" name="status" class="select w-full" required>
+                <option value="available"   <%= aset.asset_status === 'available'   ? 'selected' : '' %>>Tersedia</option>
+                <option value="in_use"      <%= aset.asset_status === 'in_use'      ? 'selected' : '' %>>Digunakan</option>
+                <option value="maintenance" <%= aset.asset_status === 'maintenance' ? 'selected' : '' %>>Perbaikan</option>
+                <option value="retired"     <%= aset.asset_status === 'retired'     ? 'selected' : '' %>>Pensiun</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="acquisition_type">Cara Perolehan <span class="text-destructive">*</span></label>
+              <select id="acquisition_type" name="acquisition_type" class="select w-full" required>
+                <option value="procurement" <%= aset.acquisition_type === 'procurement' ? 'selected' : '' %>>Pengadaan</option>
+                <option value="grant"       <%= aset.acquisition_type === 'grant'       ? 'selected' : '' %>>Hibah</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="acquisition_date">Tanggal Perolehan <span class="text-destructive">*</span></label>
+              <input type="date" id="acquisition_date" name="acquisition_date"
+                value="<%= aset.acquisition_date ? new Date(aset.acquisition_date).toISOString().split('T')[0] : '' %>"
+                class="input w-full" required />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="acquisition_cost">Harga Perolehan</label>
+              <input type="number" id="acquisition_cost" name="acquisition_cost" min="0" step="1000"
+                value="<%= aset.acquisition_cost || '' %>"
+                class="input w-full" />
+              <p class="field-description">Dalam Rupiah. Opsional.</p>
+            </div>
+            <div class="field">
+              <label class="label" for="asset_grant_id">Sumber Hibah</label>
+              <select id="asset_grant_id" name="asset_grant_id" class="select w-full">
+                <option value="">Tidak ada / N/A</option>
+                <% grants.forEach(g => { %>
+                <option value="<%= g.id %>" <%= aset.asset_grant_id == g.id ? 'selected' : '' %>><%= g.name %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-2">
+            <a href="/ruangan/<%= ruangan.id %>/aset" class="btn-outline">Batal</a>
+            <button type="submit" id="btn-update-aset" class="btn gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Simpan Perubahan
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <%- include('../../partials/_head', { title: title }) %>
+</head>
+<body>
+
+<%- include('../../partials/_sidebar', { user: user }) %>
+
+<main id="content">
+  <header class="bg-background sticky inset-x-0 top-0 isolate flex shrink-0 items-center gap-2 border-b z-10">
+    <div class="flex h-14 w-full items-center gap-2 px-4">
+      <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+        aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+      <nav aria-label="breadcrumb" class="flex items-center gap-1.5 text-sm">
+        <a href="/home" class="text-muted-foreground hover:text-foreground transition-colors">Beranda</a>
+        <span class="text-muted-foreground">/</span>
+        <a href="/ruangan" class="text-muted-foreground hover:text-foreground transition-colors">Ruangan</a>
+        <span class="text-muted-foreground">/</span>
+        <span class="text-foreground font-medium truncate max-w-[160px]"><%= ruangan.room_name %></span>
+        <span class="text-muted-foreground">/</span>
+        <span class="text-foreground font-medium">Aset</span>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+          aria-label="Toggle dark mode" class="btn-icon-outline size-8">
+          <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+        <a href="/logout" class="btn-outline btn-sm gap-1.5 hidden sm:flex">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
+
+    <%# INFO RUANGAN %>
+    <div class="card p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <% if (ruangan.photo) { %>
+      <img src="/uploads/ruangan/<%= ruangan.photo %>" alt="foto ruangan" class="h-16 w-16 rounded-lg object-cover border flex-shrink-0">
+      <% } else { %>
+      <div class="h-16 w-16 rounded-lg border bg-muted flex items-center justify-center flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted-foreground"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+      </div>
+      <% } %>
+      <div class="flex-1">
+        <h1 class="text-xl font-bold"><%= ruangan.room_name %></h1>
+        <div class="flex flex-wrap gap-2 mt-1">
+          <span class="badge badge-outline font-mono text-xs"><%= ruangan.room_code %></span>
+          <span class="badge badge-secondary text-xs"><%= ruangan.building_name %></span>
+          <% if (ruangan.floor) { %><span class="text-xs text-muted-foreground">Lantai <%= ruangan.floor %></span><% } %>
+          <% if (ruangan.capacity) { %><span class="text-xs text-muted-foreground">Kapasitas <%= ruangan.capacity %> orang</span><% } %>
+        </div>
+      </div>
+      <a href="/ruangan" class="btn-outline btn-sm gap-1.5 flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Kembali ke Ruangan
+      </a>
+    </div>
+
+    <%# PAGE TITLE + ACTION %>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl font-bold tracking-tight">Daftar Aset</h2>
+        <p class="text-muted-foreground text-sm mt-1">Kelola semua aset yang ada di ruangan ini.</p>
+      </div>
+      <a href="/ruangan/<%= ruangan.id %>/aset/create" id="btn-tambah-aset" class="btn btn-sm gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Aset
+      </a>
+    </div>
+
+    <%# FLASH MESSAGE %>
+    <% if (flash) { %>
+    <div class="alert <%= flash.type === 'success' ? 'alert-success' : 'alert-destructive' %>" role="alert" id="flash-msg">
+      <% if (flash.type === 'success') { %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <% } else { %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <% } %>
+      <div>
+        <p class="font-medium"><%= flash.type === 'success' ? 'Berhasil!' : 'Gagal!' %></p>
+        <p class="text-sm"><%= flash.message %></p>
+      </div>
+    </div>
+    <% } %>
+
+    <%# STATS MINI %>
+    <div class="flex flex-wrap gap-3">
+      <div class="card p-3 flex-1 min-w-[100px] text-center"><p class="text-[10px] font-semibold uppercase text-muted-foreground">Total</p><p class="text-xl font-bold"><%= stats.total %></p></div>
+      <%
+        const kondisiBaik   = (stats.per_kondisi.find(k => k.condition === 'good') || {}).jumlah || 0;
+        const kondisiRingan = (stats.per_kondisi.find(k => k.condition === 'minor_damage') || {}).jumlah || 0;
+        const kondisiBerat  = (stats.per_kondisi.find(k => k.condition === 'major_damage') || {}).jumlah || 0;
+      %>
+      <div class="card p-3 flex-1 min-w-[100px] text-center border-t-2 border-t-green-500"><p class="text-[10px] font-semibold uppercase text-muted-foreground">Baik</p><p class="text-xl font-bold"><%= kondisiBaik %></p></div>
+      <div class="card p-3 flex-1 min-w-[100px] text-center border-t-2 border-t-yellow-500"><p class="text-[10px] font-semibold uppercase text-muted-foreground">Rusak Ringan</p><p class="text-xl font-bold"><%= kondisiRingan %></p></div>
+      <div class="card p-3 flex-1 min-w-[100px] text-center border-t-2 border-t-red-500"><p class="text-[10px] font-semibold uppercase text-muted-foreground">Rusak Berat</p><p class="text-xl font-bold"><%= kondisiBerat %></p></div>
+    </div>
+
+    <%# TABLE ASET %>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Aset dalam <%= ruangan.room_name %></h3>
+        <p class="card-description">Total <strong><%= asets.length %></strong> aset terdaftar.</p>
+      </div>
+      <div class="card-content p-0">
+        <div class="overflow-x-auto">
+          <table class="table w-full">
+            <thead>
+              <tr>
+                <th class="w-10">#</th>
+                <th>Nama Aset</th>
+                <th>Kode</th>
+                <th>Kondisi</th>
+                <th>Status</th>
+                <th>Perolehan</th>
+                <th>Tanggal</th>
+                <th class="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% asets.forEach((a, i) => { %>
+              <tr>
+                <td class="text-muted-foreground text-sm"><%= i + 1 %></td>
+                <td class="font-medium"><%= a.asset_name %></td>
+                <td><span class="badge badge-outline font-mono text-xs"><%= a.asset_code %></span></td>
+                <td>
+                  <%
+                    const cClass = a.asset_condition === 'good' ? 'badge-success'
+                      : a.asset_condition === 'minor_damage' ? 'badge-warning'
+                      : 'badge-destructive';
+                  %>
+                  <span class="badge <%= cClass %> text-xs"><%= kondisiLabel[a.asset_condition] || a.asset_condition %></span>
+                </td>
+                <td>
+                  <%
+                    const sClass = a.asset_status === 'available' ? 'badge-secondary'
+                      : a.asset_status === 'in_use' ? 'badge'
+                      : a.asset_status === 'maintenance' ? 'badge-warning'
+                      : 'badge-outline';
+                  %>
+                  <span class="badge <%= sClass %> text-xs"><%= statusLabel[a.asset_status] || a.asset_status %></span>
+                </td>
+                <td class="text-sm text-muted-foreground"><%= perolehanLabel[a.acquisition_type] || a.acquisition_type %></td>
+                <td class="text-sm text-muted-foreground"><%= a.acquisition_date ? new Date(a.acquisition_date).toLocaleDateString('id-ID') : '—' %></td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <a href="/ruangan/<%= ruangan.id %>/aset/<%= a.id %>/edit" id="btn-edit-aset-<%= a.id %>" class="btn-sm-outline btn-sm gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Edit
+                    </a>
+                    <button type="button"
+                      id="btn-hapus-aset-<%= a.id %>"
+                      onclick="confirmDelete('/ruangan/<%= ruangan.id %>/aset/<%= a.id %>/delete', '<%= a.asset_name %>')"
+                      class="btn-sm-destructive btn-sm gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      Hapus
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+              <% if (asets.length === 0) { %>
+              <tr>
+                <td colspan="8" class="text-center py-12">
+                  <div class="flex flex-col items-center gap-2 text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="opacity-30"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    <p class="text-sm font-medium">Belum ada aset di ruangan ini.</p>
+                    <a href="/ruangan/<%= ruangan.id %>/aset/create" class="btn-sm mt-1">Tambah Aset Pertama</a>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<form id="delete-form" method="POST" action="" style="display:none;"></form>
+
+<div id="dialog-hapus" class="dialog" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="dialog-hapus-title">
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <h2 id="dialog-hapus-title" class="dialog-title">Hapus Aset</h2>
+      <p class="dialog-description">Tindakan ini tidak dapat dibatalkan.</p>
+    </div>
+    <p class="text-sm text-muted-foreground">Yakin ingin menghapus aset <strong id="dialog-hapus-name" class="text-foreground"></strong>?</p>
+    <div class="dialog-footer">
+      <button type="button" onclick="closeDialog()" class="btn-outline">Batal</button>
+      <button type="button" onclick="submitDelete()" id="btn-confirm-hapus" class="btn-destructive">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(action, name) {
+    document.getElementById('delete-form').action = action;
+    document.getElementById('dialog-hapus-name').textContent = name;
+    const d = document.getElementById('dialog-hapus');
+    d.setAttribute('aria-hidden', 'false');
+    d.classList.add('dialog-open');
+  }
+  function closeDialog() {
+    const d = document.getElementById('dialog-hapus');
+    d.setAttribute('aria-hidden', 'true');
+    d.classList.remove('dialog-open');
+  }
+  function submitDelete() { document.getElementById('delete-form').submit(); }
+  const flash = document.getElementById('flash-msg');
+  if (flash) setTimeout(() => flash.style.opacity = '0', 4000);
+</script>
+
+</body>
+</html>

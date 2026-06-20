@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <%- include('../partials/_head', { title: title }) %>
+</head>
+<body>
+
+<%- include('../partials/_sidebar', { user: user }) %>
+
+<main id="content">
+  <header class="bg-background sticky inset-x-0 top-0 isolate flex shrink-0 items-center gap-2 border-b z-10">
+    <div class="flex h-14 w-full items-center gap-2 px-4">
+      <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+        aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+      <nav aria-label="breadcrumb" class="flex items-center gap-1.5 text-sm">
+        <a href="/aset" class="text-muted-foreground hover:text-foreground transition-colors">Aset Ruangan</a>
+        <span class="text-muted-foreground">/</span>
+        <span class="text-foreground font-medium">Edit Ruangan</span>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+          aria-label="Toggle dark mode" class="btn-icon-outline size-8">
+          <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+        <a href="/logout" class="btn-outline btn-sm gap-1.5 hidden sm:flex">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
+
+    <% if (!aset) { %>
+    <div class="alert alert-destructive">
+      <p>Aset ruangan tidak ditemukan. <a href="/aset" class="underline">Kembali ke daftar</a></p>
+    </div>
+    <% } else { %>
+
+    <%
+      /* === Pre-compute semua nilai agar bebas dari ternary di dalam atribut HTML === */
+      var acqDateVal     = aset.acquisition_date ? new Date(aset.acquisition_date).toISOString().split('T')[0] : '';
+      var acqCostVal     = (aset.acquisition_cost !== null && aset.acquisition_cost !== undefined) ? aset.acquisition_cost : '';
+      var grantFieldStyle = aset.acquisition_type === 'grant' ? '' : 'display:none';
+      var flashClass     = flash && flash.type === 'success' ? 'alert-success' : 'alert-destructive';
+
+      /* Kondisi pilihan */
+      var selProcurement = aset.acquisition_type === 'procurement' ? 'selected' : '';
+      var selGrant       = aset.acquisition_type === 'grant'       ? 'selected' : '';
+      var selGood        = aset.asset_condition  === 'good'         ? 'selected' : '';
+      var selMinor       = aset.asset_condition  === 'minor_damage' ? 'selected' : '';
+      var selMajor       = aset.asset_condition  === 'major_damage' ? 'selected' : '';
+      var selAvailable   = aset.asset_status     === 'available'    ? 'selected' : '';
+      var selInUse       = aset.asset_status     === 'in_use'       ? 'selected' : '';
+      var selMaint       = aset.asset_status     === 'maintenance'  ? 'selected' : '';
+      var selRetired     = aset.asset_status     === 'retired'      ? 'selected' : '';
+      var chkPublic      = aset.is_public ? 'checked' : '';
+
+      /* Metadata tanggal */
+      var createdAtStr   = aset.created_at ? new Date(aset.created_at).toLocaleString('id-ID') : '';
+    %>
+
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold tracking-tight">Edit Aset Ruangan</h1>
+      <p class="text-muted-foreground text-sm mt-1">Memperbarui data ruangan <strong><%= aset.room_name %></strong>.</p>
+    </div>
+
+    <% if (flash) { %>
+    <div class="alert <%= flashClass %> mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><p class="text-sm"><%= flash.message %></p></div>
+    </div>
+    <% } %>
+
+    <% if (errors && errors.length > 0) { %>
+    <div class="alert alert-destructive mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <p class="font-medium">Terdapat kesalahan:</p>
+        <ul class="text-sm list-disc list-inside mt-1">
+          <% errors.forEach(function(e) { %><li><%= e %></li><% }); %>
+        </ul>
+      </div>
+    </div>
+    <% } %>
+
+    <form id="form-edit-aset" action="/aset/<%= aset.id %>/update" method="POST" enctype="multipart/form-data" class="space-y-6">
+
+      <%# === SECTION 1: Data Ruangan === %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title text-base">Data Ruangan</h2>
+        </div>
+        <div class="card-content space-y-4">
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="room_name">Nama Ruangan <span class="text-destructive">*</span></label>
+              <input type="text" id="room_name" name="room_name"
+                value="<%= aset.room_name %>" class="input w-full" required />
+            </div>
+            <div class="field">
+              <label class="label" for="room_code">Kode Ruangan <span class="text-destructive">*</span></label>
+              <input type="text" id="room_code" name="room_code"
+                value="<%= aset.room_code %>" class="input w-full" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="building_id">Gedung <span class="text-destructive">*</span></label>
+            <select id="building_id" name="building_id" class="select w-full" required>
+              <option value="">-- Pilih Gedung --</option>
+              <% buildings.forEach(function(b) { %>
+              <% var selBuilding = aset.building_id === b.id ? 'selected' : ''; %>
+              <option value="<%= b.id %>" <%= selBuilding %>>
+                <%= b.name %> (<%= b.code %>)
+              </option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="field">
+              <label class="label" for="floor">Lantai</label>
+              <input type="text" id="floor" name="floor"
+                value="<%= aset.floor || '' %>" placeholder="Contoh: 2" class="input w-full" />
+            </div>
+            <div class="field">
+              <label class="label" for="capacity">Kapasitas (orang)</label>
+              <input type="number" id="capacity" name="capacity" min="0"
+                value="<%= aset.capacity %>" class="input w-full" />
+            </div>
+            <div class="field flex flex-col justify-end pb-1">
+              <label class="label mb-2">Akses Publik</label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="is_public" name="is_public" value="1"
+                  class="checkbox" <%= chkPublic %> />
+                <span class="text-sm">Ruangan dapat diakses publik</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="photo">Foto Aset Ruangan</label>
+            <% if (aset.photo) { %>
+            <div class="mb-2">
+              <img src="/uploads/aset/<%= aset.photo %>"
+                   alt="Foto aset"
+                   style="max-height:120px; border-radius:6px; border:1px solid #ddd;">
+              <p class="text-xs text-muted-foreground mt-1">
+                Foto saat ini. Upload baru untuk mengganti.
+              </p>
+            </div>
+            <% } %>
+            <input type="file" name="photo" id="photo"
+                   accept="image/jpeg,image/png,image/webp"
+                   class="input">
+            <p class="text-xs text-muted-foreground mt-1">
+              Format: JPG, PNG, WebP. Maksimal 2MB. (Opsional)
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <%# === SECTION 2: Data Aset === %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title text-base">Data Aset</h2>
+        </div>
+        <div class="card-content space-y-4">
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="asset_name">Nama Aset <span class="text-destructive">*</span></label>
+              <input type="text" id="asset_name" name="asset_name"
+                value="<%= aset.asset_name %>" class="input w-full" required />
+            </div>
+            <div class="field">
+              <label class="label" for="asset_code">Kode Aset <span class="text-destructive">*</span></label>
+              <input type="text" id="asset_code" name="asset_code"
+                value="<%= aset.asset_code %>" class="input w-full" required />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="acquisition_type">Cara Perolehan <span class="text-destructive">*</span></label>
+              <select id="acquisition_type" name="acquisition_type" class="select w-full" required
+                onchange="toggleGrantField(this.value)">
+                <option value="procurement" <%= selProcurement %>>Pengadaan</option>
+                <option value="grant" <%= selGrant %>>Hibah</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="acquisition_date">Tanggal Perolehan <span class="text-destructive">*</span></label>
+              <input type="date" id="acquisition_date" name="acquisition_date"
+                value="<%= acqDateVal %>"
+                class="input w-full" required />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="acquisition_cost">Harga Perolehan (Rp)</label>
+              <input type="number" id="acquisition_cost" name="acquisition_cost" min="0" step="0.01"
+                value="<%= acqCostVal %>" class="input w-full" />
+            </div>
+            <% if (aset.acquisition_type === 'grant') { %>
+            <div class="field" id="grant-field">
+            <% } else { %>
+            <div class="field" id="grant-field" style="display:none">
+            <% } %>
+              <label class="label" for="asset_grant_id">Sumber Hibah</label>
+              <select id="asset_grant_id" name="asset_grant_id" class="select w-full">
+                <option value="">-- Pilih Hibah --</option>
+                <% grants.forEach(function(g) { %>
+                <% var selThisGrant = aset.asset_grant_id === g.id ? 'selected' : ''; %>
+                <option value="<%= g.id %>" <%= selThisGrant %>>
+                  <%= g.name %> (<%= g.source %>)
+                </option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+              <label class="label" for="condition">Kondisi <span class="text-destructive">*</span></label>
+              <select id="condition" name="condition" class="select w-full" required>
+                <option value="good" <%= selGood %>>Baik</option>
+                <option value="minor_damage" <%= selMinor %>>Rusak Ringan</option>
+                <option value="major_damage" <%= selMajor %>>Rusak Berat</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="status">Status <span class="text-destructive">*</span></label>
+              <select id="status" name="status" class="select w-full" required>
+                <option value="available"   <%= selAvailable %>>Tersedia</option>
+                <option value="in_use"      <%= selInUse %>>Sedang Digunakan</option>
+                <option value="maintenance" <%= selMaint %>>Dalam Perbaikan</option>
+                <option value="retired"     <%= selRetired %>>Pensiun</option>
+              </select>
+            </div>
+          </div>
+
+          <%# Metadata info %>
+          <div class="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground space-y-1">
+            <p><span class="font-medium text-foreground">Room ID:</span> <%= aset.id %></p>
+            <p><span class="font-medium text-foreground">Asset ID:</span> <%= aset.asset_id %></p>
+            <% if (aset.created_at) { %>
+            <p><span class="font-medium text-foreground">Dibuat:</span> <%= createdAtStr %></p>
+            <% } %>
+          </div>
+
+        </div>
+      </div>
+
+      <%# ACTIONS %>
+      <div class="flex items-center justify-end gap-3">
+        <a href="/aset" class="btn-outline">Batal</a>
+        <button type="submit" id="btn-update-aset" class="btn gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Simpan Perubahan
+        </button>
+      </div>
+
+    </form>
+
+    <% } %>
+  </div>
+</main>
+
+<script>
+  function toggleGrantField(val) {
+    document.getElementById('grant-field').style.display = val === 'grant' ? '' : 'none';
+  }
+</script>
+
+</body>
+</html>

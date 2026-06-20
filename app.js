@@ -8,6 +8,9 @@ var MySQLStore = require('express-mysql-session')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var gedungRouter   = require('./routes/gedungRoutes');
+var ruanganRouter  = require('./routes/ruanganRoutes');
+var apiGedungRouter = require('./routes/api/gedungApiRoutes');
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
 
 var app = express();
@@ -28,6 +31,10 @@ const sessionStore = new MySQLStore({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  createDatabaseTable: true,
+  schema: {
+    tableName: 'express_sessions'
+  }
 });
 
 app.use(session({
@@ -43,6 +50,11 @@ app.use(session({
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/gedung', gedungRouter);
+app.use('/ruangan', ruanganRouter);
+app.use('/api/gedung', apiGedungRouter);
+// Redirect /aset lama ke /ruangan
+app.use('/aset', (req, res) => res.redirect('/ruangan'));
 
 // catch 404 and forward to error handler
 app.use(notFoundHandler);

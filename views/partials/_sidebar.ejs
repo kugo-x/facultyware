@@ -1,0 +1,148 @@
+
+
+<script>
+  (() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.getElementById("sidebar");
+      if (!sidebar) return;
+
+      const updateCurrentLinks = () => {
+        const currentPath = window.location.pathname.replace(/\/$/, "");
+        sidebar.querySelectorAll("a").forEach((item) => {
+          const href = item.getAttribute("href");
+          if (!href) { item.removeAttribute("aria-current"); return; }
+          const url = new URL(href, window.location.origin);
+          const itemPath = url.pathname.replace(/\/$/, "");
+          if (currentPath.startsWith(itemPath) && itemPath !== "/") {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+      };
+
+      document.addEventListener("htmx:afterSettle", updateCurrentLinks);
+      window.addEventListener("popstate", updateCurrentLinks);
+      updateCurrentLinks();
+    });
+  })();
+</script>
+
+<aside id="sidebar" class="sidebar" data-side="left" aria-hidden="false">
+  <nav aria-label="Navigasi Sidebar">
+
+    <%# === HEADER === %>
+    <header>
+      <a href="/home" class="btn-ghost p-2 h-12 w-full justify-start">
+        <div class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+          <%# Building/Asset Icon %>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <div class="grid flex-1 text-left text-sm leading-tight">
+          <span class="truncate font-semibold">FTI Aset</span>
+          <span class="truncate text-xs text-muted-foreground">Manajemen Aset Ruangan</span>
+        </div>
+      </a>
+    </header>
+
+    <%# === MENU ITEMS === %>
+    <section>
+      <div role="group" aria-labelledby="group-label-aset">
+        <h3 id="group-label-aset">Aset Ruangan</h3>
+        <ul>
+
+          <%# Menu: Kelola Gedung %>
+          <li>
+            <a href="/gedung">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2"/>
+                <path d="M9 22V12h6v10"/>
+                <path d="M8 7h.01"/><path d="M16 7h.01"/>
+                <path d="M12 7h.01"/><path d="M12 11h.01"/>
+                <path d="M16 11h.01"/><path d="M8 11h.01"/>
+              </svg>
+              <span>Kelola Gedung</span>
+            </a>
+          </li>
+
+          <%# Menu: Kelola Ruangan %>
+          <li>
+            <a href="/ruangan">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                <rect x="7" y="7" width="10" height="10" rx="1"/>
+              </svg>
+              <span>Ruangan</span>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+
+      <div role="group" aria-labelledby="group-label-api">
+        <h3 id="group-label-api">REST API</h3>
+        <ul>
+          <li>
+            <a href="/api/gedung" target="_blank">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+              </svg>
+              <span>API Gedung</span>
+            </a>
+          </li>
+          <li>
+            <a href="/api/aset" target="_blank">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+              </svg>
+              <span>API Aset Ruangan</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <%# === FOOTER: User Info + Logout === %>
+    <footer>
+      <div id="popover-user" class="popover">
+        <button
+          id="popover-user-trigger"
+          type="button"
+          aria-expanded="false"
+          aria-controls="popover-user-popover"
+          class="btn-ghost p-2 h-12 w-full flex items-center justify-start"
+          data-keep-mobile-sidebar-open=""
+        >
+          <div class="bg-muted text-muted-foreground flex aspect-square size-8 items-center justify-center rounded-lg text-sm font-bold">
+            <%= (user || 'A').charAt(0).toUpperCase() %>
+          </div>
+          <div class="grid flex-1 text-left text-sm leading-tight ml-2">
+            <span class="truncate font-medium"><%= user || 'Admin' %></span>
+            <span class="truncate text-xs text-muted-foreground">Administrator</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>
+          </svg>
+        </button>
+        <div id="popover-user-popover" data-popover aria-hidden="true" data-side="top" class="w-56">
+          <div class="grid gap-2">
+            <p class="text-sm text-muted-foreground">Login sebagai <strong><%= user || 'Admin' %></strong></p>
+            <a href="/logout" class="btn-sm-destructive w-full">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </nav>
+</aside>

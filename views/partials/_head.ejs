@@ -1,0 +1,52 @@
+
+<script>
+  (() => {
+    try {
+      const stored = localStorage.getItem("themeMode");
+      if (stored ? stored === "dark" : matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.classList.add("dark");
+      }
+    } catch (_) {}
+
+    const apply = (dark) => {
+      document.documentElement.classList.toggle("dark", dark);
+      try { localStorage.setItem("themeMode", dark ? "dark" : "light"); } catch (_) {}
+    };
+
+    document.addEventListener("basecoat:theme", (event) => {
+      const mode = event.detail?.mode;
+      apply(mode === "dark" ? true : mode === "light" ? false : !document.documentElement.classList.contains("dark"));
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    try {
+      const storedTheme = localStorage.getItem("themeVariant");
+      if (storedTheme) document.documentElement.classList.add(`theme-${storedTheme}`);
+    } catch (e) {}
+  })();
+</script>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><%= title %> — FTI Aset</title>
+<meta name="description" content="Sistem Manajemen Aset Ruangan Fakultas Teknologi Informasi" />
+
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="stylesheet" href="/assets/styles.css" />
+
+<script src="/assets/htmx.org@2.0.4" defer></script>
+<script src="/assets/js/basecoat.js" defer></script>
+<script src="/assets/js/sidebar.js" defer></script>
+<script src="/assets/js/dropdown-menu.js" defer></script>
+<script src="/assets/js/popover.js" defer></script>
+<script src="/assets/js/toast.js" defer></script>
+<script src="/assets/js/select.js" defer></script>
+
+<script>
+  document.addEventListener("htmx:historyRestore", () => {
+    if (window.basecoat) window.basecoat.initAll();
+  });
+</script>

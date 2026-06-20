@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <%- include('../partials/_head', { title: title }) %>
+</head>
+<body>
+
+<%- include('../partials/_sidebar', { user: user }) %>
+
+<main id="content">
+  <%# === TOP HEADER BAR === %>
+  <header class="bg-background sticky inset-x-0 top-0 isolate flex shrink-0 items-center gap-2 border-b z-10">
+    <div class="flex h-14 w-full items-center gap-2 px-4">
+      <button type="button"
+        onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+        aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+
+      <%# Breadcrumb %>
+      <nav aria-label="breadcrumb" class="flex items-center gap-1.5 text-sm">
+        <a href="/home" class="text-muted-foreground hover:text-foreground transition-colors">Beranda</a>
+        <span class="text-muted-foreground">/</span>
+        <span class="text-foreground font-medium">Kelola Gedung</span>
+      </nav>
+
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+          aria-label="Toggle dark mode" class="btn-icon-outline size-8">
+          <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+        <a href="/logout" class="btn-outline btn-sm gap-1.5 hidden sm:flex">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <%# === MAIN CONTENT === %>
+  <div class="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
+
+    <%# PAGE TITLE + ACTIONS %>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Kelola Gedung</h1>
+        <p class="text-muted-foreground text-sm mt-1">Manajemen data gedung Fakultas Teknologi Informasi.</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="/gedung/export/pdf<%= q ? '?q='+encodeURIComponent(q) : '' %>" class="btn-secondary btn-sm gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Export PDF
+        </a>
+        <a href="/gedung/export/docx<%= q ? '?q='+encodeURIComponent(q) : '' %>" class="btn-secondary btn-sm gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Export DOCX
+        </a>
+        <a href="/gedung/create" id="btn-tambah-gedung" class="btn btn-sm gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Gedung
+        </a>
+      </div>
+    </div>
+
+    <%# FLASH MESSAGE %>
+    <% if (flash) { %>
+    <div class="alert <%= flash.type === 'success' ? 'alert-success' : 'alert-destructive' %>" role="alert" id="flash-msg">
+      <% if (flash.type === 'success') { %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <% } else { %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <% } %>
+      <div>
+        <p class="font-medium"><%= flash.type === 'success' ? 'Berhasil!' : 'Gagal!' %></p>
+        <p class="text-sm"><%= flash.message %></p>
+      </div>
+    </div>
+    <% } %>
+
+    <%# STATS CARDS (MINIMALIST) %>
+    <div class="flex flex-wrap gap-3">
+      <div class="card p-3 flex items-center gap-3 flex-1 min-w-[180px]">
+        <div class="bg-primary/10 text-primary rounded-lg p-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 7h.01"/><path d="M16 7h.01"/><path d="M12 7h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/><path d="M8 11h.01"/></svg>
+        </div>
+        <div>
+          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-0">Total Gedung</p>
+          <p class="text-xl font-bold leading-none"><%= stats.total_gedung %></p>
+        </div>
+      </div>
+      <div class="card p-3 flex items-center gap-3 flex-1 min-w-[180px]">
+        <div class="bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg p-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+        </div>
+        <div>
+          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-0">Total Ruangan</p>
+          <p class="text-xl font-bold leading-none"><%= stats.total_ruangan %></p>
+        </div>
+      </div>
+      <div class="card p-3 flex items-center gap-3 flex-1 min-w-[180px]">
+        <div class="bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg p-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div>
+          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-0">Rata-rata Ruangan</p>
+          <p class="text-xl font-bold leading-none"><%= stats.total_gedung > 0 ? (stats.total_ruangan / stats.total_gedung).toFixed(1) : 0 %></p>
+        </div>
+      </div>
+    </div>
+
+    <%# SEARCH + TABLE CARD %>
+    <div class="card">
+      <div class="card-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 class="card-title">Daftar Gedung</h2>
+          <p class="card-description">
+            <% if (q) { %>Menampilkan hasil pencarian untuk "<strong><%= q %></strong>" — <%= gedungs.length %> data ditemukan.<% } else { %>Total <%= gedungs.length %> gedung terdaftar.<% } %>
+          </p>
+        </div>
+        <form method="GET" action="/gedung" class="flex flex-wrap items-center gap-2">
+          <input type="text" id="search-gedung" name="q" value="<%= q %>" placeholder="Cari nama atau kode..." class="input input-sm w-full sm:w-64" />
+          <button type="submit" class="btn btn-sm">Cari</button>
+          <% if (q) { %><a href="/gedung" class="btn-outline btn-sm">Reset</a><% } %>
+        </form>
+      </div>
+
+      <div class="card-content p-0">
+        <div class="overflow-x-auto">
+          <table class="table w-full">
+            <thead>
+              <tr>
+                <th class="w-12">#</th>
+                <th>Nama Gedung</th>
+                <th>Kode</th>
+                <th>Jumlah Ruangan</th>
+                <th>Deskripsi</th>
+                <th class="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% gedungs.forEach((g, i) => {
+                const ruanganInfo = stats.ruangan_per_gedung.find(r => r.id === g.id);
+                const jumlahRuangan = ruanganInfo ? ruanganInfo.jumlah_ruangan : 0;
+              %>
+              <tr>
+                <td class="text-muted-foreground text-sm"><%= i + 1 %></td>
+                <td class="font-medium"><%= g.name %></td>
+                <td><span class="badge badge-outline font-mono text-xs"><%= g.code %></span></td>
+                <td>
+                  <span class="badge <%= jumlahRuangan > 0 ? 'badge-secondary' : 'badge-outline' %>">
+                    <%= jumlahRuangan %> ruangan
+                  </span>
+                </td>
+                <td class="text-muted-foreground text-sm max-w-xs truncate"><%= g.description || '—' %></td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <a href="/gedung/<%= g.id %>/edit" id="btn-edit-gedung-<%= g.id %>" class="btn-sm-outline btn-sm gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Edit
+                    </a>
+                    <button type="button"
+                      id="btn-hapus-gedung-<%= g.id %>"
+                      onclick="confirmDelete('/gedung/<%= g.id %>/delete', '<%= g.name %>')"
+                      class="btn-sm-destructive btn-sm gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      Hapus
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+              <% if (gedungs.length === 0) { %>
+              <tr>
+                <td colspan="6" class="text-center py-12">
+                  <div class="flex flex-col items-center gap-2 text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><rect x="4" y="2" width="16" height="20" rx="2"/></svg>
+                    <p class="text-sm font-medium">Belum ada data gedung<% if (q) { %> untuk pencarian "<%= q %>"<% } %>.</p>
+                    <% if (!q) { %><a href="/gedung/create" class="btn-sm mt-1">Tambah Gedung Pertama</a><% } %>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><%# end .p-6 %>
+</main>
+
+<%# ======================================================
+    HIDDEN FORM + DIALOG KONFIRMASI HAPUS
+    ====================================================== %>
+<form id="delete-form" method="POST" action="" style="display:none;"></form>
+
+<script>
+  function confirmDelete(action, name) {
+    if (window.confirm('Hapus gedung "' + name + '"?\n\nTindakan ini tidak dapat dibatalkan.')) {
+      document.getElementById('delete-form').action = action;
+      document.getElementById('delete-form').submit();
+    }
+  }
+  const flash = document.getElementById('flash-msg');
+  if (flash) setTimeout(() => { flash.style.transition = 'opacity 0.5s'; flash.style.opacity = '0'; }, 4000);
+</script>
+
+</body>
+</html>
