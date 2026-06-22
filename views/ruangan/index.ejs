@@ -25,7 +25,7 @@
           <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
           <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         </button>
-        <a href="/logout" class="btn-outline btn-sm gap-1.5 hidden sm:flex">
+        <a href="/logout" class="btn-secondary btn-sm gap-1.5 hidden sm:flex">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout
         </a>
@@ -50,10 +50,12 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Export DOCX
         </a>
+        <% if (role === 'admin') { %>
         <a href="/ruangan/create" id="btn-tambah-ruangan" class="btn btn-sm gap-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Tambah Ruangan
         </a>
+        <% } %>
       </div>
     </div>
 
@@ -120,7 +122,7 @@
           <div class="flex items-center gap-2 w-full sm:w-auto">
             <button type="submit" class="btn btn-sm flex-1 sm:flex-none">Filter</button>
             <% if (q || buildingId) { %>
-            <a href="/ruangan" class="btn-outline btn-sm flex-1 sm:flex-none text-center">Reset</a>
+            <a href="/ruangan" class="btn-secondary btn-sm flex-1 sm:flex-none text-center">Reset</a>
             <% } %>
           </div>
         </form>
@@ -150,39 +152,45 @@
                   <% if (r.photo) { %>
                     <img src="/uploads/ruangan/<%= r.photo %>" alt="foto" style="max-height:40px; border-radius:4px;">
                   <% } else { %>
-                    <span class="text-muted-foreground">—</span>
+                    <span class="text-muted-foreground">-</span>
                   <% } %>
                 </td>
                 <td>
                   <div class="font-medium"><%= r.room_name %></div>
                   <div class="text-xs text-muted-foreground"><%= r.building_name %></div>
                 </td>
-                <td><span class="badge badge-outline font-mono text-xs"><%= r.room_code %></span></td>
+                <td><span class="badge badge-secondary font-mono text-xs"><%= r.room_code %></span></td>
                 <td class="text-sm"><%= r.building_name %></td>
-                <td class="text-sm text-muted-foreground"><%= r.floor || '—' %></td>
+                <td class="text-sm text-muted-foreground"><%= r.floor || '-' %></td>
                 <td class="text-center text-sm"><%= r.capacity %></td>
                 <td class="text-center">
-                  <span class="badge <%= r.jumlah_aset > 0 ? 'badge-secondary' : 'badge-outline' %>">
+                  <% const badgeClass = r.jumlah_aset > 0 ? 'badge-secondary' : 'badge-secondary opacity-50'; %>
+                  <span class="badge <%= badgeClass %>">
                     <%= r.jumlah_aset %> aset
                   </span>
                 </td>
                 <td class="text-right">
                   <div class="flex items-center justify-end gap-1.5">
-                    <a href="/ruangan/<%= r.id %>/aset" id="btn-kelola-aset-<%= r.id %>" class="btn-sm gap-1 btn-outline btn-sm text-xs">
+                    <a href="/ruangan/<%= r.id %>/aset" id="btn-kelola-aset-<%= r.id %>" class="btn-secondary btn-sm gap-1 text-xs">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                       Kelola Aset
                     </a>
-                    <a href="/ruangan/<%= r.id %>/edit" id="btn-edit-ruangan-<%= r.id %>" class="btn-sm-outline btn-sm gap-1">
+                    <% if (role === 'admin') { %>
+                    <a href="/ruangan/<%= r.id %>/edit" id="btn-edit-ruangan-<%= r.id %>" class="btn-secondary btn-sm gap-1">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       Edit
                     </a>
                     <button type="button"
                       id="btn-hapus-ruangan-<%= r.id %>"
-                      onclick="confirmDelete('/ruangan/<%= r.id %>/delete', '<%= r.room_name %>', <%= r.jumlah_aset %>)"
+                      data-url="/ruangan/<%= r.id %>/delete"
+                      data-name="<%= r.room_name %>"
+                      data-count="<%= r.jumlah_aset %>"
+                      onclick="confirmDelete(this)"
                       class="btn-sm-destructive btn-sm gap-1">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                       Hapus
                     </button>
+                    <% } %>
                   </div>
                 </td>
               </tr>
@@ -193,7 +201,7 @@
                   <div class="flex flex-col items-center gap-2 text-muted-foreground">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="opacity-30"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
                     <p class="text-sm font-medium">Belum ada data ruangan.</p>
-                    <a href="/ruangan/create" class="btn-sm mt-1">Tambah Ruangan Pertama</a>
+                    <% if (role === 'admin') { %><a href="/ruangan/create" class="btn-sm mt-1">Tambah Ruangan Pertama</a><% } %>
                   </div>
                 </td>
               </tr>
@@ -209,46 +217,23 @@
 
 <form id="delete-form" method="POST" action="" style="display:none;"></form>
 
-<div id="dialog-hapus" class="dialog" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="dialog-hapus-title">
-  <div class="dialog-content">
-    <div class="dialog-header">
-      <h2 id="dialog-hapus-title" class="dialog-title">Hapus Ruangan</h2>
-      <p class="dialog-description" id="dialog-hapus-desc">Tindakan ini tidak dapat dibatalkan.</p>
-    </div>
-    <p class="text-sm text-muted-foreground">Yakin ingin menghapus ruangan <strong id="dialog-hapus-name" class="text-foreground"></strong>?</p>
-    <p class="text-sm text-destructive mt-1 hidden" id="dialog-hapus-warning">
-      ⚠️ Ruangan ini masih memiliki <strong id="dialog-aset-count"></strong> aset. Semua aset akan ikut terhapus!
-    </p>
-    <div class="dialog-footer">
-      <button type="button" onclick="closeDialog()" class="btn-outline">Batal</button>
-      <button type="button" onclick="submitDelete()" id="btn-confirm-hapus" class="btn-destructive">Ya, Hapus</button>
-    </div>
-  </div>
-</div>
-
 <script>
-  function confirmDelete(action, name, jumlahAset) {
-    document.getElementById('delete-form').action = action;
-    document.getElementById('dialog-hapus-name').textContent = name;
-    const warning = document.getElementById('dialog-hapus-warning');
+  function confirmDelete(btn) {
+    const action    = btn.dataset.url;
+    const name      = btn.dataset.name;
+    const jumlahAset = parseInt(btn.dataset.count) || 0;
+
+    let msg = `Yakin ingin menghapus ruangan "${name}"?\nTindakan ini tidak dapat dibatalkan.`;
     if (jumlahAset > 0) {
-      document.getElementById('dialog-aset-count').textContent = jumlahAset;
-      warning.classList.remove('hidden');
-    } else {
-      warning.classList.add('hidden');
+      msg += `\n\n[!] Ruangan ini masih memiliki ${jumlahAset} aset. Semua aset akan ikut terhapus!`;
     }
-    const d = document.getElementById('dialog-hapus');
-    d.setAttribute('aria-hidden', 'false');
-    d.classList.add('dialog-open');
+    if (window.confirm(msg)) {
+      document.getElementById('delete-form').action = action;
+      document.getElementById('delete-form').submit();
+    }
   }
-  function closeDialog() {
-    const d = document.getElementById('dialog-hapus');
-    d.setAttribute('aria-hidden', 'true');
-    d.classList.remove('dialog-open');
-  }
-  function submitDelete() { document.getElementById('delete-form').submit(); }
   const flash = document.getElementById('flash-msg');
-  if (flash) setTimeout(() => flash.style.opacity = '0', 4000);
+  if (flash) setTimeout(() => { flash.style.transition = 'opacity 0.5s'; flash.style.opacity = '0'; }, 4000);
 </script>
 
 </body>

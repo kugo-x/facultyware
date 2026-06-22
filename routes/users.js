@@ -1,8 +1,8 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-const usersController = require('../controllers/usersController');
+const usersController = require("../controllers/usersController");
 
 /* GET users listing. */
-router.get('/', usersController.list);
+router.get("/", usersController.list);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-const db = require('../lib/db');
+const db = require("../lib/db");
 
 // =============================================
 //  READ
@@ -8,7 +8,7 @@ const db = require('../lib/db');
  * Ambil semua ruangan dengan optional search + filter gedung.
  * Sertakan jumlah aset per ruangan.
  */
-const getAll = async (q = '', buildingId = 0) => {
+const getAll = async (q = "", buildingId = 0) => {
   const conditions = [];
   const params = [];
 
@@ -22,7 +22,8 @@ const getAll = async (q = '', buildingId = 0) => {
     params.push(buildingId);
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const where =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const [rows] = await db.query(
     `SELECT
@@ -46,7 +47,7 @@ const getAll = async (q = '', buildingId = 0) => {
      GROUP BY r.id, r.name, r.code, r.floor, r.capacity, r.is_public, r.photo,
               r.building_id, b.name, b.code, r.created_at, r.updated_at
      ORDER BY b.name ASC, r.name ASC`,
-    params
+    params,
   );
   return rows;
 };
@@ -72,7 +73,7 @@ const getById = async (id) => {
      FROM rooms r
      JOIN buildings b ON r.building_id = b.id
      WHERE r.id = ?`,
-    [id]
+    [id],
   );
   return rows[0] || null;
 };
@@ -82,7 +83,7 @@ const getById = async (id) => {
  */
 const getStats = async () => {
   const [[{ total_ruangan }]] = await db.query(
-    `SELECT COUNT(*) AS total_ruangan FROM rooms`
+    `SELECT COUNT(*) AS total_ruangan FROM rooms`,
   );
 
   const [ruangan_per_gedung] = await db.query(
@@ -90,7 +91,7 @@ const getStats = async () => {
      FROM buildings b
      LEFT JOIN rooms r ON r.building_id = b.id
      GROUP BY b.id, b.name
-     ORDER BY b.name ASC`
+     ORDER BY b.name ASC`,
   );
 
   return { total_ruangan, ruangan_per_gedung };
@@ -101,7 +102,7 @@ const getStats = async () => {
  */
 const getAllBuildings = async () => {
   const [rows] = await db.query(
-    `SELECT id, name, code FROM buildings ORDER BY name ASC`
+    `SELECT id, name, code FROM buildings ORDER BY name ASC`,
   );
   return rows;
 };
@@ -112,7 +113,7 @@ const getAllBuildings = async () => {
 const hasAssets = async (roomId) => {
   const [[{ total }]] = await db.query(
     `SELECT COUNT(*) AS total FROM assets WHERE room_id = ?`,
-    [roomId]
+    [roomId],
   );
   return total > 0;
 };
@@ -138,7 +139,7 @@ const create = async (data) => {
       data.capacity || 0,
       data.is_public ? 1 : 0,
       data.photo || null,
-    ]
+    ],
   );
   return result.insertId;
 };
@@ -162,18 +163,38 @@ const update = async (id, data) => {
   await db.query(
     `UPDATE rooms SET
        building_id = ?, name = ?, code = ?, floor = ?,
-       capacity = ?, is_public = ?${data.photo ? ', photo = ?' : ''},
+       capacity = ?, is_public = ?${data.photo ? ", photo = ?" : ""},
        updated_at = NOW()
      WHERE id = ?`,
-    params
+    params,
   );
 };
 
 /**
- * Hapus ruangan (dan semua aset di dalamnya via CASCADE).
+ * Hapus ruangan beserta semua asetnya.
+ * Menghapus assets secara eksplisit dulu agar tidak bergantung
+ * pada ON DELETE CASCADE yang mungkin belum dikonfigurasi.
  */
 const destroy = async (id) => {
-  await db.query(`DELETE FROM rooms WHERE id = ?`, [id]);
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    await conn.query("SET FOREIGN_KEY_CHECKS=0");
+    // Hapus semua aset di ruangan ini terlebih dahulu
+    await conn.query(`DELETE FROM assets WHERE room_id = ?`, [id]);
+    // Baru hapus ruangannya
+    await conn.query(`DELETE FROM rooms WHERE id = ?`, [id]);
+    await conn.query("SET FOREIGN_KEY_CHECKS=1");
+    await conn.commit();
+  } catch (err) {
+    try {
+      await conn.query("SET FOREIGN_KEY_CHECKS=1");
+    } catch (e) {}
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 };
 
 module.exports = {

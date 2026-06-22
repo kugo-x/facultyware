@@ -6,7 +6,11 @@ const index = (req, res) => {
 };
 
 const home = (req, res) => {
-  res.render("home", { title: "Home", user: req.session.username });
+  res.render("home", {
+    title: "Home",
+    user: req.session.username,
+    role: req.session.role || "user",
+  });
 };
 
 const loginPage = (req, res) => {
@@ -44,8 +48,12 @@ const login = async (req, res, next) => {
     // Set session
     req.session.userId = user.id;
     req.session.username = user.name || user.email;
+    req.session.role = user.role || "user";
 
-    res.redirect("/home");
+    req.session.save((err) => {
+      if (err) return next(err);
+      res.redirect("/home");
+    });
   } catch (err) {
     console.error("Login Error:", err);
     next(err);
@@ -66,5 +74,5 @@ module.exports = {
   home,
   loginPage,
   login,
-  logout
+  logout,
 };

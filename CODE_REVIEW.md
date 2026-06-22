@@ -2,7 +2,7 @@
 
 > Dokumen ini menjelaskan struktur dan kondisi kode proyek **terkini**,
 > untuk keperluan sinkronisasi dan meminta review/saran kepada Claude (project manager AI).
-> **Terakhir diperbarui: 12 Juni 2026**
+> **Terakhir diperbarui: 22 Juni 2026**
 
 ---
 
@@ -11,9 +11,9 @@
 Proyek ini adalah **fork** dari sistem manajemen fakultas open-source
 ([husnilk/facultyware](https://github.com/husnilk/facultyware)).
 
-Saya mengerjakan modul **"FTI Aset Ruangan"** dengan jobdesk:
+Saya mengerjakan modul **"FTI Aset Ruangan"**. Fokus arsitektur saat ini adalah **Room-centric**, di mana aset berada *di dalam* ruangan.
 - **Kelola Gedung**: CRUD + Search + Statistik + Export PDF/DOCX + REST API
-- **Kelola Aset Ruangan**: CRUD + Search + Filter + Export PDF/DOCX + REST API
+- **Ruangan & Kelola Aset**: CRUD Ruangan + CRUD Aset per Ruangan + Export PDF/DOCX + REST API
 
 ### Tech Stack
 | Komponen | Detail |
@@ -25,365 +25,139 @@ Saya mengerjakan modul **"FTI Aset Ruangan"** dengan jobdesk:
 | Session Store | `express-session` + `express-mysql-session` |
 | UI | Basecoat (Tailwind CSS component library, vanilla JS) |
 | Interaktivitas | HTMX v2.0.4 |
-| Export PDF | `pdfkit` |
-| Export Word | `docx` |
-| Auth | Session-based (`bcryptjs`) |
+| Export PDF/Word | `pdfkit` / `docx` |
+| Auth & Roles | Session-based (`bcryptjs`). Role: `admin` (Full) & `user` (Read-only) |
+| Code Formatting | **Prettier** (Diterapkan pada semua file JS backend) |
 
 ---
 
-## 2. Struktur Folder
+## 2. Struktur Folder Utama
 
 ```
 facultyware/
 ├── app.js                        # Entry point, middleware, route registration
-├── bin/www                       # HTTP server bootstrap
-├── .env                          # DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, PORT, SESSION_SECRET
 ├── database/
 │   ├── facultyware.sql           # Skema database lengkap + seed
-│   └── fix_rooms_nullable.sql    # Migration: buat responsible_employee_id & employee_id nullable
-├── lib/
-│   └── db.js                     # mysql2 pool.promise() — koneksi database
+│   └── add_role_to_users.sql     # Migration: tambah kolom role ENUM('admin','user')
+├── scripts/
+│   └── create_test_user.js       # Script node untuk insert akun test user read-only
 ├── middlewares/
-│   ├── auth.js                   # isAuthenticated: cek req.session.userId
-│   ├── acl.js                    # checkPermission: RBAC (belum dipakai di modul ini)
+│   ├── auth.js                   # isAuthenticated, apiAuthenticated, isAdmin
+│   ├── acl.js                    # checkPermission: (deprecated/belum terpakai di modul ini)
 │   └── error.js                  # notFoundHandler + errorHandler
 ├── models/
-│   ├── gedungModel.js            # Query raw SQL untuk tabel `buildings`
-│   └── asetModel.js              # Query raw SQL untuk JOIN rooms+assets+buildings
+│   ├── gedungModel.js            # Raw SQL untuk `buildings`
+│   └── ruanganModel.js           # Raw SQL untuk `rooms`
+│   └── asetModel.js              # Raw SQL untuk `assets` (di dalam ruangan)
 ├── controllers/
-│   ├── gedungController.js       # Web CRUD + exportPdf + exportDocx + API CRUD
-│   └── asetController.js         # Web CRUD + exportPdf + exportDocx + API CRUD
+│   ├── gedungController.js       
+│   └── ruanganController.js      # Menangani CRUD Ruangan sekaligus Aset di dalamnya
 ├── routes/
-│   ├── gedungRoutes.js           # Web routes /gedung/*
-│   ├── asetRoutes.js             # Web routes /aset/*
-│   └── api/
-│       ├── gedungApiRoutes.js    # REST API /api/gedung (GET/POST/PUT/DELETE)
-│       └── asetApiRoutes.js      # REST API /api/aset (GET/POST/PUT/DELETE)
+│   ├── gedungRoutes.js           # /gedung/* (Diproteksi isAdmin untuk write)
+│   ├── ruanganRoutes.js          # /ruangan/* dan /ruangan/:id/aset/* (Diproteksi isAdmin untuk write)
+│   └── api/                      # REST API Endpoint
 └── views/
-    ├── home.ejs                  # Dashboard utama (shortcut modul + API reference)
-    ├── partials/
-    │   ├── _head.ejs             # Shared <head>: CSS, HTMX, dark mode scripts
-    │   └── _sidebar.ejs          # Sidebar navigasi Basecoat
-    ├── gedung/
-    │   ├── index.ejs             # Daftar gedung: stats cards, search, tabel, dialog hapus
-    │   ├── create.ejs            # Form tambah gedung (+ flash message)
-    │   └── edit.ejs              # Form edit gedung (+ flash message)
-    └── aset/
-        ├── index.ejs             # Daftar ruangan: stats cards, filter, tabel, dialog hapus
-        ├── create.ejs            # Form tambah ruangan (2 section: Data Ruangan + Data Aset, + flash)
-        └── edit.ejs              # Form edit ruangan (+ flash message)
+    ├── partials/_sidebar.ejs     # Navigasi (REST API disembunyikan, Role info ditambahkan)
+    ├── gedung/                   # Tampilan modul gedung
+    └── ruangan/                  # Tampilan daftar ruangan dan daftar aset per ruangan
 ```
 
 ---
 
-## 3. Skema Database yang Digunakan
+## 3. Skema Database & Role System
 
 ### Relasi Tabel
-
 ```
-buildings (1) ──────< rooms (N) >──── assets (1)
-                                           └──< asset_grants (optional)
+buildings (1) ──────< rooms (N) >──── assets (N)
 ```
 
-### Tabel `buildings`
+### Tabel `users` (Update Terbaru)
 ```sql
-id, name, code, description, created_at, updated_at
--- code: UNIQUE KEY
+id, name, email, password (bcrypt), role ENUM('admin', 'user'), created_at, updated_at
 ```
-
-### Tabel `assets`
-```sql
-id, name, code,
-type             ENUM('equipment', 'room'),
-acquisition_type ENUM('procurement', 'grant'),
-acquisition_date DATE,
-acquisition_cost DECIMAL(14,2),
-asset_grant_id   FK -> asset_grants.id  (nullable),
-condition        ENUM('good', 'minor_damage', 'major_damage'),
-status           ENUM('available', 'in_use', 'maintenance', 'retired'),
-created_at, updated_at
--- code: UNIQUE KEY
-```
-
-### Tabel `rooms`
-```sql
-id,
-asset_id               FK -> assets.id       (NOT NULL),
-building_id            FK -> buildings.id    (NOT NULL),
-name, code, floor,
-capacity               INT,
-is_public              TINYINT(1),
-responsible_employee_id FK -> employees.id  (NULL — setelah fix_rooms_nullable.sql),
-employee_id            FK -> employees.id   (NULL — setelah fix_rooms_nullable.sql),
-created_at, updated_at
-```
-
-> **Catatan penting:** `responsible_employee_id` dan `employee_id` awalnya `NOT NULL`.
-> Saat INSERT, nilai `1` di-hardcode tapi tabel `employees` kosong → FK violation.
-> **Solusi yang diterapkan:** `SET FOREIGN_KEY_CHECKS=0` sebelum INSERT/UPDATE di dalam transaksi,
-> lalu `SET FOREIGN_KEY_CHECKS=1` sebelum COMMIT. Nilai dikirim sebagai `NULL`.
-> File `database/fix_rooms_nullable.sql` tersedia untuk migrasi struktural jika diperlukan.
-
-### Tabel `users` (untuk autentikasi)
-```sql
-id, name, email, password (bcrypt), created_at, updated_at
--- Sudah ada seed: admin@example.com
-```
+- **Admin**: Akses penuh (CRUD).
+- **User**: Akses Read-only (Hanya bisa melihat daftar, export PDF/DOCX).
+- **Migration**: File `database/add_role_to_users.sql`
 
 ---
 
 ## 4. Pola Kode yang Digunakan
 
-### a. Database (lib/db.js)
+### a. Database & Transaksi (lib/db.js)
 ```javascript
-// mysql2 pool dengan promise API
-const pool = mysql.createPool({ host, user, password, database, ... });
-module.exports = pool.promise();
-
-// Query biasa:
-const [rows] = await db.query('SELECT * FROM buildings WHERE id = ?', [id]);
-
-// Transaksi multi-tabel (pola FINAL yang diterapkan):
 const conn = await db.getConnection();
 try {
   await conn.beginTransaction();
-  await conn.query('SET FOREIGN_KEY_CHECKS=0');  // bypass FK untuk employee columns
-  // ... semua query INSERT/UPDATE di sini ...
-  await conn.query('SET FOREIGN_KEY_CHECKS=1');
-  await conn.commit();
+  await conn.query('SET FOREIGN_KEY_CHECKS=0');
+  // ... query ...
 } catch (err) {
-  try { await conn.query('SET FOREIGN_KEY_CHECKS=1'); } catch(e) {}
-  await conn.rollback();
-  throw err;
+  // ... rollback ...
 } finally {
-  conn.release();  // SELALU dilepas, apapun yang terjadi
+  conn.release();  // Selalu dieksekusi untuk cegah connection leak
 }
 ```
 
-### b. Model
+### b. Middlewares (auth.js)
 ```javascript
-// Semua fungsi async, return data langsung
-const getAll    = async (q = '') => { ... };
-const getById   = async (id) => { ... };
-const getStats  = async () => { ... };
-const create    = async (data) => { ... };  // transaksi 2 tabel
-const update    = async (id, data) => { ... };  // transaksi 2 tabel
-const destroy   = async (id) => { ... };  // transaksi 2 tabel
-const hasRooms  = async (id) => { ... };  // validasi sebelum hapus gedung
+// Web Auth
+function isAuthenticated(req, res, next) { /* redirect to /login */ }
 
-module.exports = { getAll, getById, getStats, create, update, destroy, hasRooms };
+// Role Auth (Web)
+function isAdmin(req, res, next) { 
+  /* cek req.session.role === 'admin'. Jika tidak, flash error & redirect back */ 
+}
+
+// API Auth (Menghindari HTML Redirect untuk Consumer API)
+function apiAuthenticated(req, res, next) { 
+  /* kembalikan 401 JSON: { success: false, message: 'Akses ditolak' } */ 
+}
 ```
 
-### c. Controller (pola umum)
+### c. Routes Protection (Pemisahan Read & Write)
 ```javascript
-// Web controller: flash message diambil dari session, diteruskan ke view
-const create = (req, res) => {
-  const flash = req.session.flash || null;
-  delete req.session.flash;
-  res.render('gedung/create', { title, flash, user: req.session.username, errors: null, old: {} });
-};
+// READ — Semua user login bisa akses
+router.get('/', isAuthenticated, ruanganController.index);
 
-// Penanganan ER_DUP_ENTRY (duplikat kode):
-const store = async (req, res, next) => {
-  try {
-    await Model.create(data);
-    req.session.flash = { type: 'success', message: '...' };
-    res.redirect('/gedung');
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      req.session.flash = { type: 'error', message: 'Kode sudah digunakan.' };
-      return res.redirect('/gedung/create');
-    }
-    next(err);
-  }
-};
-
-// API controller: return JSON + HTTP 409 untuk duplikat
-const apiCreate = async (req, res, next) => {
-  try {
-    const id = await Model.create(data);
-    res.status(201).json({ success: true, message: '...', data: await Model.getById(id) });
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ success: false, message: 'Kode sudah digunakan.' });
-    }
-    next(err);
-  }
-};
+// WRITE — Hanya admin
+router.post('/store', isAuthenticated, isAdmin, ruanganController.store);
 ```
 
-### d. Routes
-```javascript
-// Web routes — semua diproteksi isAuthenticated
-router.get('/',              isAuthenticated, controller.index);
-router.get('/create',        isAuthenticated, controller.create);
-router.post('/store',        isAuthenticated, controller.store);
-router.get('/export/pdf',    isAuthenticated, controller.exportPdf);   // HARUS sebelum /:id
-router.get('/export/docx',   isAuthenticated, controller.exportDocx);  // HARUS sebelum /:id
-router.get('/:id/edit',      isAuthenticated, controller.edit);
-router.post('/:id/update',   isAuthenticated, controller.update);
-router.post('/:id/delete',   isAuthenticated, controller.destroy);
-
-// API routes — tanpa auth (by design / sesuai requirements tugas)
-router.get('/',    controller.apiIndex);
-router.get('/:id', controller.apiShow);
-router.post('/',   controller.apiCreate);
-router.put('/:id', controller.apiUpdate);
-router.delete('/:id', controller.apiDelete);
-```
-
-### e. Flash Message di Views (EJS + Basecoat)
-```ejs
-<%# Flash message — muncul setelah redirect (contoh: ER_DUP_ENTRY) %>
-<% if (flash) { %>
-<div class="alert <%= flash.type === 'success' ? 'alert-success' : 'alert-destructive' %> mb-4">
-  <svg ...></svg>
-  <div><p class="text-sm"><%= flash.message %></p></div>
-</div>
-<% } %>
-
-<%# Validation errors — muncul saat re-render form tanpa redirect %>
-<% if (errors && errors.length > 0) { %>
-<div class="alert alert-destructive mb-6">
-  <ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
-</div>
-<% } %>
+### d. UI & EJS Data Attributes (Anti-Parsing Error)
+Untuk menghindari error parsing *Language Server* di VS Code akibat sintaks EJS di dalam HTML attribute `onclick`, pola yang digunakan adalah **HTML5 `data-*` attributes**:
+```html
+<!-- DARI: onclick="delete(<%= id %>, <%- JSON.stringify(name) %>)" -->
+<!-- MENJADI: -->
+<button data-url="/delete/<%= id %>" data-name="<%= name %>" onclick="confirmDelete(this)">
+  Hapus
+</button>
 ```
 
 ---
 
-## 5. Daftar Endpoint
+## 5. Status Perubahan Terbaru (Per Juni 2026)
 
-### Web (memerlukan login)
-| Method | URL | Fungsi |
-|---|---|---|
-| GET | `/gedung` | Daftar gedung + search `?q=` |
-| GET | `/gedung/create` | Form tambah gedung |
-| POST | `/gedung/store` | Simpan gedung baru |
-| GET | `/gedung/:id/edit` | Form edit gedung |
-| POST | `/gedung/:id/update` | Update gedung |
-| POST | `/gedung/:id/delete` | Hapus gedung |
-| GET | `/gedung/export/pdf` | Export PDF (support `?q=`) |
-| GET | `/gedung/export/docx` | Export DOCX (support `?q=`) |
-| GET | `/aset` | Daftar ruangan + `?q=` + `?building_id=` |
-| GET | `/aset/create` | Form tambah ruangan |
-| POST | `/aset/store` | Simpan ruangan baru |
-| GET | `/aset/:id/edit` | Form edit ruangan |
-| POST | `/aset/:id/update` | Update ruangan |
-| POST | `/aset/:id/delete` | Hapus ruangan |
-| GET | `/aset/export/pdf` | Export PDF (support `?q=` + `?building_id=`) |
-| GET | `/aset/export/docx` | Export DOCX (support `?q=` + `?building_id=`) |
+### ✅ Selesai Diimplementasikan (Update dari versi sebelumnya)
+1. **Perubahan Arsitektur "Room-Centric"**: Modul Aset sekarang menjadi "anak" dari modul Ruangan. URL CRUD aset sekarang berada di bawah ruangan (`/ruangan/:id/aset/...`).
+2. **Role System & Read-Only User**: Tabel users ditambahkan kolom `role`. Middleware `isAdmin` memblokir akses ke fungsi Tambah/Edit/Hapus bagi user biasa.
+3. **Keamanan REST API**: Sebelumnya API bisa diakses publik (tanpa login). Sekarang, operasi Write (POST/PUT/DELETE) di endpoint `/api/gedung` dan `/api/aset` dilindungi oleh `apiAuthenticated` (mengembalikan respons `401 JSON`). GET tetap terbuka.
+4. **Code Quality (Prettier)**: Seluruh file JS backend (controllers, models, routes, lib) sudah diformat otomatis mengikuti standar kebersihan kode (indentasi konsisten, trailing commas, spacing).
+5. **UI Fixes**: Masalah escape string pada nama ruangan yang mengandung kutip/apostrof (saat konfirmasi hapus) sudah diselesaikan dengan refactoring ke `data-*` attributes, sekaligus membersihkan *error linting* palsu di IDE VS Code.
+6. **Testing E2E (Playwright)**: Seluruh skenario testing E2E (23 test cases) telah sukses dilewati, mencakup Authentication, Role Access, CRUD Gedung, CRUD Ruangan & Aset, hingga Security REST API. Bug UI yang sempat memblokir testing (seperti custom dialog yang meng-*intercept* *pointer events*) telah diselesaikan dengan penyeragaman menggunakan *native* `window.confirm`.
 
-### REST API (tanpa auth)
-| Method | URL | Fungsi |
-|---|---|---|
-| GET | `/api/gedung` | List gedung (JSON) |
-| GET | `/api/gedung/:id` | Detail gedung |
-| POST | `/api/gedung` | Buat gedung |
-| PUT | `/api/gedung/:id` | Update gedung |
-| DELETE | `/api/gedung/:id` | Hapus gedung |
-| GET | `/api/aset` | List aset ruangan (JSON, support `?q=` + `?building_id=`) |
-| GET | `/api/aset/:id` | Detail aset ruangan |
-| POST | `/api/aset` | Buat aset ruangan (INSERT ke 2 tabel: assets + rooms) |
-| PUT | `/api/aset/:id` | Update aset ruangan (UPDATE 2 tabel) |
-| DELETE | `/api/aset/:id` | Hapus aset ruangan (DELETE rooms lalu assets) |
-
-### API Response Format
-```json
-{ "success": true, "data": [...], "total": 5 }
-{ "success": true, "message": "...", "data": { ... } }
-{ "success": true, "message": "Berhasil dihapus." }
-{ "success": false, "message": "Tidak ditemukan." }
-{ "success": false, "message": "Field wajib kurang: ..." }
-{ "success": false, "message": "Kode sudah digunakan." }
-```
+### 🟡 Diketahui tapi Dibiarkan (By Design / Scope)
+1. Tidak menggunakan validasi library eksternal (seperti `joi` atau `zod`); hanya mengandalkan pengecekan manual dan keamanan *parameterized query*.
+2. Tidak menggunakan `req.session.regenerate()` setelah login (di luar *scope*).
 
 ---
 
-## 6. Status Bug & Perbaikan
+## 6. Pertanyaan Aktif untuk Claude (Asisten Manajerial)
 
-### ✅ Sudah Diperbaiki (CLOSED)
-
-| # | Masalah | Solusi yang Diterapkan |
-|---|---|---|
-| 1 | **FK Violation**: `responsible_employee_id` & `employee_id` hardcode `1` tapi tabel `employees` kosong | Nilai diubah ke `NULL`. Transaksi menggunakan `SET FOREIGN_KEY_CHECKS=0/1`. File SQL migration tersedia di `database/fix_rooms_nullable.sql`. |
-| 2 | **ER_DUP_ENTRY tidak tertangkap**: Error MySQL mentah tampil ke user saat kode duplikat | Semua fungsi `store` dan `update` (Web + API) di kedua controller kini menangkap `err.code === 'ER_DUP_ENTRY'` dan mengembalikan pesan ramah via flash/HTTP 409. |
-| 3 | **Connection Leak**: `conn.release()` di dalam `try`/`catch`, bukan `finally` | Semua transaksi di `asetModel.js` kini menggunakan `finally { conn.release(); }`. |
-| 4 | **EJS Parser Crash**: `<%- include %>` bersarang di dalam `<%# comment %>` | Semua komentar EJS yang bermasalah di `_head.ejs` dan `_sidebar.ejs` sudah diganti menjadi komentar HTML biasa. |
-| 5 | **Logout tidak berfungsi**: Navigasi/routing sidebar rusak | Header dan sidebar distandarisasi di semua view; tombol Logout muncul konsisten di setiap halaman. |
-| 6 | **Flash message tidak muncul di form**: View `create.ejs` dan `edit.ejs` tidak menerima variabel `flash` | Controller `create` (GET) dan `edit` (GET) kini mengambil dan meneruskan `flash` dari session. Blok alert flash ditambahkan di keempat view form. |
-
-### 🟡 Diketahui tapi Dibiarkan (by design)
-
-| # | Hal | Alasan |
-|---|---|---|
-| 7 | **API tanpa autentikasi** | Sesuai requirements tugas. Endpoint `POST/PUT/DELETE /api/*` bisa diakses siapa saja. |
-| 8 | **Tidak ada `req.session.regenerate()` setelah login** | Di luar scope tugas. Potensi session fixation attack di production. |
-| 9 | **Tidak ada library validasi input** (joi/express-validator) | Hanya mengandalkan parameterized query mysql2 untuk SQL injection prevention. Cukup untuk scope tugas. |
-| 10 | **Basecoat pre-compiled CSS** | File `styles.css` statis, banyak kelas Tailwind responsif tidak tersedia. Disiasati dengan `flex flex-wrap` dan komponen Basecoat murni. |
-
-### 🟢 Fitur yang Sudah Berjalan
-
-- [x] CRUD lengkap — Gedung dan Aset Ruangan
-- [x] Transaksi database multi-tabel dengan pola `try/catch/finally`
-- [x] `SET FOREIGN_KEY_CHECKS=0/1` untuk bypass FK employees
-- [x] Penanganan `ER_DUP_ENTRY` di Web (flash) dan API (HTTP 409)
-- [x] Flash message di semua halaman form (create & edit)
-- [x] Search server-side (`LIKE`) dan Filter per Gedung
-- [x] Statistik real-time (total, per kondisi, per status)
-- [x] Export PDF (`pdfkit`) — support filter aktif
-- [x] Export DOCX (`docx` library) — support filter aktif
-- [x] REST API GET/POST/PUT/DELETE untuk kedua modul
-- [x] Pengecekan relasi sebelum hapus (gedung tidak bisa dihapus jika punya ruangan)
-- [x] UI Basecoat: sidebar, dashboard, stats cards minimalis, tabel, dialog konfirmasi, badge kondisi/status
-- [x] Dark mode + Light mode toggle
-- [x] Session-based authentication (login/logout)
-
----
-
-## 7. Pertanyaan Aktif untuk Direview
-
-```
-1. Apakah penggunaan SET FOREIGN_KEY_CHECKS=0 di dalam transaksi
-   merupakan praktik yang aman untuk production?
-   Adakah risiko data integrity yang perlu diwaspadai?
-
-2. Apakah ada security concern serius dengan implementasi session/auth
-   saat ini (tanpa session.regenerate()) yang harus diperbaiki
-   meski ini hanya aplikasi tugas?
-
-3. Apakah ada anti-pattern lain dalam kode ini yang perlu direfactor
-   sebelum dianggap "selesai" untuk keperluan tugas/skripsi?
+```text
+1. Dengan perubahan arsitektur menjadi Room-Centric dan penambahan Role Read-Only, apakah ada skenario edge-case UI/UX yang mungkin saya lewatkan (misalnya, visibilitas tombol bagi user)?
+2. Fungsi API Write sekarang membalas dengan 401 JSON jika tidak login. Apakah praktik ini sudah standar untuk internal REST API yang dikonsumsi oleh HTMX/Fetch JS client di sistem yang sama?
+3. Dengan seluruh kode backend (.js) sudah di-format menggunakan Prettier, apa best-practice untuk merapikan kode .ejs tanpa merusak sintaks server-side templating-nya?
+4. Setelah E2E Testing dengan Playwright sukses (23/23 passed), apakah ada saran untuk integrasi CI/CD (seperti GitHub Actions) atau tambahan level testing lain (seperti Unit Testing dengan Jest) yang perlu diprioritaskan?
 ```
 
 ---
-
-## 8. Cara Menjalankan Proyek
-
-```bash
-# 1. Clone & install
-git clone <repo-url>
-cd facultyware
-npm install
-
-# 2. Setup database
-# Import file: database/facultyware.sql ke MySQL
-# (Opsional) Jalankan: database/fix_rooms_nullable.sql
-# Pastikan database bernama: facultyware
-
-# 3. Setup environment
-cp .env.example .env
-# Isi: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, SESSION_SECRET
-
-# 4. Jalankan
-npm run dev   # Development (nodemon, auto-restart)
-npm start     # Production
-
-# Server berjalan di: http://localhost:3000
-# Login default: admin@example.com (password ada di seed SQL)
-```
-
----
-
-*Dokumen ini adalah snapshot kondisi kode terkini per 12 Juni 2026.
-Semua bug yang tercantum di bagian 6 (CLOSED) telah diperbaiki dan diverifikasi.*
+*Dokumen ini adalah snapshot kondisi kode terkini per 22 Juni 2026.*

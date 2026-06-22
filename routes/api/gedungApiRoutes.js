@@ -1,20 +1,30 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-const gedungController = require('../../controllers/gedungController');
+const gedungController = require("../../controllers/gedungController");
+const { apiAuthenticated } = require("../../middlewares/auth");
 
-// GET    /api/gedung         → semua gedung (+ ?q= search)
-router.get('/',    gedungController.apiIndex);
+// =============================================
+//  READ — Terbuka untuk umum (tanpa login)
+// =============================================
 
-// GET    /api/gedung/:id     → 1 gedung
-router.get('/:id', gedungController.apiShow);
+// GET /api/gedung          → semua gedung (+ ?q= search)
+router.get("/", gedungController.apiIndex);
 
-// POST   /api/gedung         → buat gedung baru
-router.post('/',   gedungController.apiCreate);
+// GET /api/gedung/:id      → detail 1 gedung
+router.get("/:id", gedungController.apiShow);
 
-// PUT    /api/gedung/:id     → update gedung
-router.put('/:id', gedungController.apiUpdate);
+// =============================================
+//  WRITE — Wajib login (session-based)
+//  Response 401 JSON jika belum terautentikasi
+// =============================================
 
-// DELETE /api/gedung/:id     → hapus gedung
-router.delete('/:id', gedungController.apiDelete);
+// POST   /api/gedung        → buat gedung baru
+router.post("/", apiAuthenticated, gedungController.apiCreate);
+
+// PUT    /api/gedung/:id    → update gedung
+router.put("/:id", apiAuthenticated, gedungController.apiUpdate);
+
+// DELETE /api/gedung/:id   → hapus gedung
+router.delete("/:id", apiAuthenticated, gedungController.apiDelete);
 
 module.exports = router;
