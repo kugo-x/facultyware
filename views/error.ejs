@@ -1,3 +1,19 @@
-<h1><%= message %></h1>
-<h2><%= error.status %></h2>
-<pre><%= error.stack %></pre>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Error</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #fff; color: #000; }
+    h1 { color: red; }
+    pre { background: #f4f4f4; padding: 1rem; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Terjadi Kesalahan Server (500)</h1>
+  <h2><%= message %></h2>
+  <h3><%= error ? error.status : '' %></h3>
+  <pre><%= error ? error.stack : '' %></pre>
+  <p><a href="/login">Kembali ke Login</a></p>
+</body>
+</html>
