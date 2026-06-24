@@ -74,16 +74,16 @@
     <%# WELCOME SECTION %>
     <div class="flex flex-col gap-1">
       <h1 class="text-2xl font-bold tracking-tight">
-        Selamat datang, <%= user || 'Admin' %>! 👋
+        Selamat datang, <%= user || 'Admin' %>
       </h1>
       <p class="text-muted-foreground">
-        Sistem Manajemen Aset Ruangan — Fakultas Teknologi Informasi.
+        Sistem Informasi Manajemen Gedung dan Ruangan — Fakultas Teknologi Informasi
       </p>
     </div>
 
     <%# MODULE CARDS %>
     <section>
-      <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">Modul Tersedia</h2>
+      <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">Menu Utama</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <%# Card: Kelola Gedung %>
@@ -103,18 +103,11 @@
                 <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
               </svg>
             </div>
-            <h2 class="text-base font-semibold group-hover:text-primary transition-colors">Kelola Gedung</h2>
+            <h2 class="text-base font-semibold group-hover:text-primary transition-colors">Data Gedung</h2>
             <p class="text-sm text-muted-foreground mt-1">
-              Tambah, edit, dan hapus data gedung. Lihat statistik ruangan per gedung, cari data, dan ekspor laporan.
+              Kelola informasi seluruh gedung di lingkungan fakultas.
             </p>
           </header>
-          <footer class="flex flex-wrap gap-1.5 mt-3">
-            <span class="badge badge-secondary text-xs">CRUD</span>
-            <span class="badge badge-secondary text-xs">Statistik</span>
-            <span class="badge badge-secondary text-xs">Export PDF</span>
-            <span class="badge badge-secondary text-xs">Export DOCX</span>
-            <span class="badge badge-secondary text-xs">REST API</span>
-          </footer>
         </a>
 
         <%# Card: Aset Ruangan %>
@@ -134,80 +127,13 @@
                 <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
               </svg>
             </div>
-            <h2 class="text-base font-semibold group-hover:text-primary transition-colors">Aset Ruangan</h2>
+            <h2 class="text-base font-semibold group-hover:text-primary transition-colors">Data Ruangan & Aset</h2>
             <p class="text-sm text-muted-foreground mt-1">
-              Kelola data ruangan beserta informasi asetnya. Filter per gedung, lacak kondisi dan status, ekspor laporan.
+              Pencatatan ruangan beserta status dan rincian aset di dalamnya.
             </p>
           </header>
-          <footer class="flex flex-wrap gap-1.5 mt-3">
-            <span class="badge badge-secondary text-xs">CRUD</span>
-            <span class="badge badge-secondary text-xs">Filter Gedung</span>
-            <span class="badge badge-secondary text-xs">Export PDF</span>
-            <span class="badge badge-secondary text-xs">Export DOCX</span>
-            <span class="badge badge-secondary text-xs">REST API</span>
-          </footer>
         </a>
 
-      </div>
-    </section>
-
-    <%# API QUICK REFERENCE %>
-    <section>
-      <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">REST API — Endpoint</h2>
-      <div class="card">
-        <div class="card-content p-0">
-          <table class="table w-full text-sm">
-            <thead>
-              <tr>
-                <th class="w-24">Method</th>
-                <th>Endpoint</th>
-                <th class="hidden sm:table-cell">Fungsi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="badge bg-green-500/15 text-green-700 dark:text-green-400 font-mono text-xs">GET</span></td>
-                <td class="font-mono text-xs">/api/gedung</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Daftar semua gedung</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-blue-500/15 text-blue-700 dark:text-blue-400 font-mono text-xs">POST</span></td>
-                <td class="font-mono text-xs">/api/gedung</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Tambah gedung baru</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 font-mono text-xs">PUT</span></td>
-                <td class="font-mono text-xs">/api/gedung/:id</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Update gedung</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-red-500/15 text-red-700 dark:text-red-400 font-mono text-xs">DELETE</span></td>
-                <td class="font-mono text-xs">/api/gedung/:id</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Hapus gedung</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-green-500/15 text-green-700 dark:text-green-400 font-mono text-xs">GET</span></td>
-                <td class="font-mono text-xs">/api/aset</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Daftar semua aset ruangan</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-blue-500/15 text-blue-700 dark:text-blue-400 font-mono text-xs">POST</span></td>
-                <td class="font-mono text-xs">/api/aset</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Tambah aset ruangan baru</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 font-mono text-xs">PUT</span></td>
-                <td class="font-mono text-xs">/api/aset/:id</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Update aset ruangan</td>
-              </tr>
-              <tr>
-                <td><span class="badge bg-red-500/15 text-red-700 dark:text-red-400 font-mono text-xs">DELETE</span></td>
-                <td class="font-mono text-xs">/api/aset/:id</td>
-                <td class="hidden sm:table-cell text-muted-foreground">Hapus aset ruangan</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </section>
 
