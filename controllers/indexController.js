@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const db = require("../lib/db");
 
 const index = (req, res) => {
-  res.render("index", { title: "Express" });
+  res.redirect("/login");
 };
 
 const home = (req, res) => {
